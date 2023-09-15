@@ -1,0 +1,8 @@
+{
+  "id": "myapp:user-policy",
+  "version": "0.0.1",
+  "subjects": ["user"],
+  "actions": ["view"],
+  "resources": ["general-page"],
+  "effect": "allow"
+}

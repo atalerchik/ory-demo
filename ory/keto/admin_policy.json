@@ -1,0 +1,8 @@
+{
+  "id": "myapp:admin-policy",
+  "version": "0.0.1",
+  "subjects": ["admin"],
+  "actions": ["view", "manage"],
+  "resources": ["general-page", "admin-page"],
+  "effect": "allow"
+}
