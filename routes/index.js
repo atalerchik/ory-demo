@@ -1,36 +1,52 @@
-// Copyright © 2022 Ory Corp
-// SPDX-License-Identifier: Apache-2.0
+var express = require("express");
+var router = express.Router();
+var sdk = require("@ory/client");
 
-var express = require("express")
-var router = express.Router()
-// highlight-start
-var sdk = require("@ory/client")
+const ketoPermissions = new sdk.PermissionApi({
+  basePath: process.env.ORY_KETO_URL, // replace with your Keto instance URL
+});
 
 var ory = new sdk.FrontendApi(
   new sdk.Configuration({
-    basePath:
-      process.env.ORY_SDK_URL || "https://playground.projects.oryapis.com",
-  }),
-)
-// highlight-end
+    basePath: process.env.ORY_KRATOS_URL,
+  })
+);
 
-/* GET home page. */
-router.get("/", function (req, res, next) {
-  // highlight-start
-  ory
-    .toSession({ cookie: req.header("cookie") })
-    .then(({ data: session }) => {
+router.get("/", async function (req, res) {
+  try {
+    console.log(process.env.ORY_KRATOS_URL);
+    const session = await ory.toSession({ cookie: req.header("cookie") });
+    const permission = await ketoPermissions.checkPermission({
+      namespace: "myapp",
+      object: "general-page",
+      relation: "owner",
+      subjectId: `user:${session.data.identity.traits.email}`,
+    });
+
+    if (permission.data.allowed) {
       res.render("index", {
-        title: "Express",
-        // Our identity is stored in the session along with other useful information.
-        identity: session.identity,
-      })
-    })
-    .catch(() => {
-      // If logged out, send to login page
-      res.redirect("/.ory/ui/login")
-    })
-  // highlight-end
-})
+        title: "You have permission",
+        identity: session.data.identity,
+      });
+      return;
+    }
 
-module.exports = router
+    res.render("index", {
+      title: "You don't have permission",
+      identity: session.data.identity,
+    });
+  } catch (error) {
+    console.error(error);
+    res.redirect(`${process.env.ORY_KRATOS_URL}/self-service/login/browser`);
+  }
+});
+
+router.get("/logout", (req, res) => {
+  ory
+    .createBrowserLogoutFlow({ cookie: req.header("cookie") })
+    .then(({ data }) => {
+      res.redirect(data.logout_url);
+    });
+});
+
+module.exports = router;

@@ -2,4 +2,5 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}, #{identity.traits.email}
+  p Welcome #{identity.traits.email}
+  a(href='/logout') Logout
