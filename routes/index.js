@@ -14,7 +14,6 @@ var ory = new sdk.FrontendApi(
 
 router.get("/", async function (req, res) {
   try {
-    console.log(process.env.ORY_KRATOS_URL);
     const session = await ory.toSession({ cookie: req.header("cookie") });
     const permission = await ketoPermissions.checkPermission({
       namespace: "myapp",
@@ -38,6 +37,25 @@ router.get("/", async function (req, res) {
   } catch (error) {
     console.error(error);
     res.redirect(`${process.env.ORY_KRATOS_URL}/self-service/login/browser`);
+  }
+});
+
+router.get("/admin", async (req, res) => {
+  try {
+    const session = await ory.toSession({ cookie: req.header("cookie") });
+    await ketoPermissions.checkPermissionOrError({
+      namespace: "myapp",
+      object: "general-page",
+      relation: "owner",
+      subjectId: `user:${session.data.identity.traits.email}`,
+    });
+
+    res.render("index", {
+      title: "You owner of this page",
+      identity: session.data.identity,
+    });
+  } catch (error) {
+    res.status(403).send({ message: "Permission denide" });
   }
 });
 
