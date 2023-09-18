@@ -1,0 +1,6 @@
+{
+  "namespace": "myapp",
+  "object": "general-page",
+  "relation": "owner",
+  "subject_id": "user:atalerchik@twelvedevs.com"
+}
