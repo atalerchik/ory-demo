@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": false,
   "scripts": {
-    "proxy": "ory proxy --dev --project cool-lumiere-opetn0n7vu --no-jwt --port 4000 http://192.168.1.76:3000/",
+    "proxy": "node --env-file=.env ./ory/setProxy.js",
     "start": "node --env-file=.env ./bin/www"
   },
   "dependencies": {
