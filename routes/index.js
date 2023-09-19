@@ -1,10 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var sdk = require("@ory/client");
-
-const ketoPermissions = new sdk.PermissionApi({
-  basePath: process.env.KETO_URL, // replace with your Keto instance URL
-});
+const { checkPermission, getSession } = require("../utils/oryUtils");
 
 var ory = new sdk.FrontendApi(
   new sdk.Configuration({
@@ -14,17 +11,17 @@ var ory = new sdk.FrontendApi(
 
 router.get("/", async function (req, res) {
   try {
-    const session = await ory.toSession({
-      cookie: req.header("cookie"),
-    });
-    const permission = await ketoPermissions.checkPermission({
-      namespace: "myapp",
-      object: "general-page",
-      relation: "owner",
-      subjectId: `user:${session.data.identity.traits.email}`,
-    });
+    const session = await getSession(req.header("cookie"));
 
-    if (permission.data.allowed) {
+    const userEmail = session.data.identity.traits.email;
+    const permission = await checkPermission(
+      userEmail,
+      "general-page",
+      "owner",
+      "myapp"
+    );
+
+    if (permission) {
       res.render("index", {
         title: "You have permission",
         identity: session.data.identity,
@@ -46,15 +43,16 @@ router.get("/", async function (req, res) {
 
 router.get("/admin", async (req, res) => {
   try {
-    const session = await ory.toSession({
-      cookie: req.header("cookie"),
-    });
-    await ketoPermissions.checkPermissionOrError({
-      namespace: "myapp",
-      object: "general-page",
-      relation: "owner",
-      subjectId: `user:${session.data.identity.traits.email}`,
-    });
+    const session = await getSession(req.header("cookie"));
+    const permission = await checkPermission(
+      userEmail,
+      "general-page",
+      "owner",
+      "myapp"
+    );
+    if (permission) {
+      throw new Error();
+    }
 
     res.render("index", {
       title: "You owner of this page",

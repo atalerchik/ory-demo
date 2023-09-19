@@ -1,0 +1,32 @@
+- id: global_manager
+  description: Manager with access to all routes
+  subjects:
+    - managers:global
+  resources:
+    - resources:routes:*
+  actions:
+    - view
+    - manage
+  effect: allow
+
+- id: area_manager
+  description: Manager with access to routes in area
+  subjects:
+    - managers:area:<area_id>
+  resources:
+    - resources:routes:area:<area_id>:*
+  actions:
+    - view
+    - manage
+  effect: allow
+
+- id: route_manager
+  description: Manager with access to a single route
+  subjects:
+    - managers:route:<route_id>
+  resources:
+    - resources:routes:route:<route_id>
+  actions:
+    - view
+    - manage
+  effect: allow
