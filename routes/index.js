@@ -3,18 +3,20 @@ var router = express.Router();
 var sdk = require("@ory/client");
 
 const ketoPermissions = new sdk.PermissionApi({
-  basePath: process.env.ORY_KETO_URL, // replace with your Keto instance URL
+  basePath: process.env.KETO_URL, // replace with your Keto instance URL
 });
 
 var ory = new sdk.FrontendApi(
   new sdk.Configuration({
-    basePath: process.env.ORY_KRATOS_URL,
+    basePath: process.env.KRATOS_URL,
   })
 );
 
 router.get("/", async function (req, res) {
   try {
-    const session = await ory.toSession({ cookie: req.header("cookie") });
+    const session = await ory.toSession({
+      cookie: req.header("cookie"),
+    });
     const permission = await ketoPermissions.checkPermission({
       namespace: "myapp",
       object: "general-page",
@@ -36,13 +38,17 @@ router.get("/", async function (req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.redirect(`${process.env.ORY_KRATOS_URL}/self-service/login/browser`);
+    res.redirect(
+      `${process.env.KRATOS_URL}/self-service/login/browser`
+    );
   }
 });
 
 router.get("/admin", async (req, res) => {
   try {
-    const session = await ory.toSession({ cookie: req.header("cookie") });
+    const session = await ory.toSession({
+      cookie: req.header("cookie"),
+    });
     await ketoPermissions.checkPermissionOrError({
       namespace: "myapp",
       object: "general-page",
