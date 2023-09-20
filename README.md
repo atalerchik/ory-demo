@@ -57,4 +57,8 @@ npm run start
 npm run proxy
 ```
 
-Now project start with url: http://localhost:4000
+### URL's
+
+- Project URL: http://localhost:4000/    
+- For receive emails (mailslurper): http://localhost:4436/    
+- ORY Kratos UI: http://localhost:4455/welcome    
