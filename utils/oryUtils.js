@@ -1,4 +1,3 @@
-var sdk = require("@ory/client");
 const {
   mainNamespace,
   mainRole,
@@ -6,26 +5,12 @@ const {
   areaManagerObject,
   routeManagerObject,
 } = require("../constants");
-
-const { KETO_READ_URL, KETO_WRITE_URL, KRATOS_URL } = process.env;
-
-const readKeto = new sdk.PermissionApi({
-  basePath: KETO_READ_URL,
-});
-
-const writeKeto = new sdk.PermissionApi({
-  basePath: KETO_WRITE_URL,
-});
-
-const relationKeto = new sdk.RelationshipApi({
-  basePath: KETO_WRITE_URL,
-});
-
-const ory = new sdk.FrontendApi(
-  new sdk.Configuration({
-    basePath: KRATOS_URL,
-  })
-);
+const {
+  frontendKeto,
+  permissionApi,
+  relationApi,
+  writableRelationApi,
+} = require("../libs/ory");
 
 async function checkPermission(
   user_id,
@@ -33,7 +18,7 @@ async function checkPermission(
   relation = mainRole,
   namespace = mainNamespace
 ) {
-  const response = await readKeto.checkPermission({
+  const response = await permissionApi.checkPermission({
     namespace: namespace,
     object,
     relation: relation,
@@ -43,7 +28,7 @@ async function checkPermission(
   return response.data.allowed;
 }
 async function getSession(cookie) {
-  return await ory.toSession({
+  return await frontendKeto.toSession({
     cookie,
   });
 }
@@ -58,7 +43,7 @@ async function getUserPermissions(userId, areaId) {
   try {
     const permissionResponses = await Promise.all(
       rules.map((rule) =>
-        readKeto.checkPermission({
+        permissionApi.checkPermission({
           namespace: mainNamespace,
           object: rule,
           relation: mainRole,
@@ -80,7 +65,7 @@ async function getUserPermissions(userId, areaId) {
 }
 
 async function getRelationships(queryParams) {
-  return relationKeto.getRelationships({ ...queryParams });
+  return relationApi.getRelationships({ ...queryParams });
 }
 
 class RelationshipHandler {
@@ -91,7 +76,7 @@ class RelationshipHandler {
   }
 
   async create(sessionId) {
-    return await relationKeto.createRelationship({
+    return await writableRelationApi.createRelationship({
       createRelationshipBody: {
         namespace: this.namespace,
         object: this.object,
