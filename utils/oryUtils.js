@@ -7,13 +7,23 @@ const {
   routeManagerObject,
 } = require("../constants");
 
+const { KETO_READ_URL, KETO_WRITE_URL, KRATOS_URL } = process.env;
+
 const readKeto = new sdk.PermissionApi({
-  basePath: process.env.KETO_READ_URL,
+  basePath: KETO_READ_URL,
+});
+
+const writeKeto = new sdk.PermissionApi({
+  basePath: KETO_WRITE_URL,
+});
+
+const relationKeto = new sdk.RelationshipApi({
+  basePath: KETO_WRITE_URL,
 });
 
 const ory = new sdk.FrontendApi(
   new sdk.Configuration({
-    basePath: process.env.KRATOS_URL,
+    basePath: KRATOS_URL,
   })
 );
 
@@ -57,15 +67,6 @@ async function getUserPermissions(userId, areaId) {
       )
     );
 
-    console.log(
-      Object.fromEntries(
-        permissionResponses.map((response, index) => [
-          rules[index],
-          response.data.allowed,
-        ])
-      )
-    );
-
     return Object.fromEntries(
       permissionResponses.map((response, index) => [
         rules[index],
@@ -78,8 +79,33 @@ async function getUserPermissions(userId, areaId) {
   }
 }
 
+async function getRelationships(queryParams) {
+  return relationKeto.getRelationships({ ...queryParams });
+}
+
+class RelationshipHandler {
+  constructor(namespace, object, role) {
+    this.namespace = namespace;
+    this.object = object;
+    this.relation = role;
+  }
+
+  async create(sessionId) {
+    return await relationKeto.createRelationship({
+      createRelationshipBody: {
+        namespace: this.namespace,
+        object: this.object,
+        relation: this.relation,
+        subject_id: sessionId,
+      },
+    });
+  }
+}
+
 module.exports = {
+  RelationshipHandler,
   checkPermission,
   getSession,
   getUserPermissions,
+  getRelationships,
 };

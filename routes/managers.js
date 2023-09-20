@@ -1,6 +1,6 @@
-var express = require("express");
-var router = express.Router();
-var sdk = require("@ory/client");
+const express = require("express");
+const router = express.Router();
+
 const {
   mainNamespace,
   globalManagerObject,
@@ -8,95 +8,80 @@ const {
   areaManagerObject,
   routeManagerObject,
 } = require("../constants");
-const { getSession } = require("../utils/oryUtils");
+const {
+  getSession,
+  getRelationships,
+  RelationshipHandler,
+} = require("../utils/oryUtils");
+const errorHandler = require("../utils/errorHandler");
 
-const writeKeto = new sdk.RelationshipApi({
-  basePath: process.env.KETO_WRITE_URL,
-});
-
-const readKeto = new sdk.RelationshipApi({
-  basePath: process.env.KETO_READ_URL,
-});
-
-router.get("/global", async (req, res) => {
+// Utility function to create relationships
+const createRelationAndRedirect = async (
+  req,
+  res,
+  relationshipHandler,
+  redirectPath
+) => {
   try {
     const session = await getSession(req.header("cookie"));
-
-    await writeKeto.createRelationship({
-      createRelationshipBody: {
-        namespace: mainNamespace,
-        object: globalManagerObject,
-        relation: mainRole,
-        subject_id: session.data.identity.id,
-      },
-    });
-    res.redirect("/routes");
+    await relationshipHandler.create(session.data.identity.id);
+    res.redirect(redirectPath);
   } catch (error) {
-    console.error(error);
-    res.redirect(
-      `${process.env.KRATOS_URL}/self-service/login/browser`
-    );
+    errorHandler(error, req, res);
   }
+};
+
+router.get("/global", async (req, res) => {
+  const relationshipHandler = new RelationshipHandler(
+    mainNamespace,
+    globalManagerObject,
+    mainRole
+  );
+  createRelationAndRedirect(req, res, relationshipHandler, "/routes");
 });
 
 router.get("/area", async (req, res) => {
-  try {
-    const session = await getSession(req.header("cookie"));
-
-    await writeKeto.createRelationship({
-      createRelationshipBody: {
-        namespace: mainNamespace,
-        object: `${areaManagerObject}1`,
-        relation: mainRole,
-        subject_id: session.data.identity.id,
-      },
-    });
-    res.redirect("/routes/1");
-  } catch (error) {
-    console.error(error);
-    res.redirect(
-      `${process.env.KRATOS_URL}/self-service/login/browser`
-    );
-  }
+  const relationshipHandler = new RelationshipHandler(
+    mainNamespace,
+    `${areaManagerObject}1`,
+    mainRole
+  );
+  createRelationAndRedirect(
+    req,
+    res,
+    relationshipHandler,
+    "/routes/1"
+  );
 });
 
 router.get("/route", async (req, res) => {
-  try {
-    const session = await getSession(req.header("cookie"));
-
-    await writeKeto.createRelationship({
-      createRelationshipBody: {
-        namespace: mainNamespace,
-        object: `${routeManagerObject}1`,
-        relation: mainRole,
-        subject_id: session.data.identity.id,
-      },
-    });
-
-    res.redirect("/routes/1");
-  } catch (error) {
-    console.error(error);
-    res.redirect(
-      `${process.env.KRATOS_URL}/self-service/login/browser`
-    );
-  }
+  const relationshipHandler = new RelationshipHandler(
+    mainNamespace,
+    `${routeManagerObject}1`,
+    mainRole
+  );
+  createRelationAndRedirect(
+    req,
+    res,
+    relationshipHandler,
+    "/routes/1"
+  );
 });
 
 router.get("/", async (req, res) => {
   try {
     const session = await getSession(req.header("cookie"));
 
-    const relations = await readKeto.getRelationships({
+    const relations = await getRelationships({
       subjectId: session.data.identity.id,
     });
 
-    res.status(200).send({
+    res.status(200).json({
       sessionId: session.data.identity.id,
       relations: relations.data,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).send({ error });
+    errorHandler(error, req, res);
   }
 });
 
