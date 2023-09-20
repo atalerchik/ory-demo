@@ -1,6 +1,3 @@
-// Copyright © 2022 Ory Corp
-// SPDX-License-Identifier: Apache-2.0
-
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
@@ -13,7 +10,6 @@ var routesRouter = require("./routes/routes");
 
 var app = express();
 
-// view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
 
