@@ -43,6 +43,7 @@ router.get("/", async function (req, res) {
 
 router.get("/admin", async (req, res) => {
   try {
+    const userEmail = session.data.identity.traits.email;
     const session = await getSession(req.header("cookie"));
     const permission = await checkPermission(
       userEmail,
